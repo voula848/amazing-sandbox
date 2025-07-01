@@ -1,0 +1,276 @@
+# Amazing Sandbox (`asb`) ![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/ashishb/amazing-sandbox/total)
+
+[![Lint GitHub Actions](https://github.com/ashishb/amazing-sandbox/actions/workflows/lint-github-actions.yaml/badge.svg)](https://github.com/ashishb/amazing-sandbox/actions/workflows/lint-github-actions.yaml)
+[![Lint Markdown](https://github.com/ashishb/amazing-sandbox/actions/workflows/lint-markdown.yaml/badge.svg)](https://github.com/ashishb/amazing-sandbox/actions/workflows/lint-markdown.yaml)
+[![Lint YAML](https://github.com/ashishb/amazing-sandbox/actions/workflows/lint-yaml.yaml/badge.svg)](https://github.com/ashishb/amazing-sandbox/actions/workflows/lint-yaml.yaml)
+
+[![Lint Go](https://github.com/ashishb/amazing-sandbox/actions/workflows/lint-go.yaml/badge.svg)](https://github.com/ashishb/amazing-sandbox/actions/workflows/lint-go.yaml)
+[![Validate Go code formatting](https://github.com/ashishb/amazing-sandbox/actions/workflows/format-go.yaml/badge.svg)](https://github.com/ashishb/amazing-sandbox/actions/workflows/format-go.yaml)
+
+Amazing Sandbox (AS) is for running various tools inside
+
+```mermaid
+graph TD
+    AS[Amazing Sandbox] -->|Default| D[<a href='https://ashishb.net/programming/docker-101/'>Docker-based Sandbox</a>]
+    AS -->|Mac OS| S[<a href='https://igorstechnoclub.com/sandbox-exec/'>Seatbelt-based Sandbox</a>]
+    AS -->|GNU/Linux| B[<a href='https://github.com/containers/bubblewrap'>Bubblewrap Sandbox</a>]
+```
+
+- [x] Prevents [malicious packages](https://www.kaspersky.com/about/press-releases/kaspersky-uncovers-500k-crypto-heist-through-malicious-packages-targeting-cursor-developers) from having full disk access and stealing data
+- [x] Prevents AI agents from [mistakenly](https://www.theregister.com/2025/12/01/google_antigravity_wipes_d_drive/) deleting all files on your disk
+- [x] Optionally, run packages like linters [air-gapped](https://en.wikipedia.org/wiki/Air_gap_(networking)) (no internet access) as well
+
+## Features
+
+Default config
+
+- [x] Give Read-write access to the current directory
+- [x] Network access
+- [x] Load `.env` file from the current directory
+- [x] Cache various build steps using Docker
+- [x] Give Read-write access to any explicitly referenced files via CLI arguments
+
+Configurable via CLI parameters
+
+- [x] Disable read access to the current and referenced directories via `-x`
+- [x] Provide Read-only access to the referenced directories via `-r`
+- [x] Disable network access via `-n`
+- [x] Disable `.env` file loading via `--load-env=false`
+- [x] Add ability to pass a custom Docker image via `-i`
+
+## Supported
+
+- [Python](https://www.python.org/)
+   - [x] [`python`](https://docs.python.org/3/using/cmdline.html)
+   - [x] [`pip`](https://pip.pypa.io/en/latest/cli/)
+   - [x] [`poetry`](https://python-poetry.org/docs/cli/)
+   - [x] [`uv`](https://docs.astral.sh/uv/)
+   - [x] [`uvx`](https://docs.astral.sh/uv/guides/tools/)
+- JavaScript/Typescript
+   - [x] [`npx`](https://docs.npmjs.com/cli/v8/commands/npx)
+   - [x] [`npm`](https://docs.npmjs.com/cli/v11/commands)
+   - [x] [`yarn`](https://yarnpkg.com/cli)
+   - [x] [`pnpm`](https://pnpm.io/pnpm-cli)
+   - [x] [`bun`](https://bun.com/docs/guides)
+- [x] [Go](https://go.dev/) `go-exec`
+- [x] [Rust](https://rust-lang.org/) `cargo` and `cargo-exec`
+- [x] [Ruby](https://www.ruby-lang.org/en/) `gem` and `gem-exec`
+- [x] [Haskell](https://www.haskell.org/) `cabal` and `cabal-exec`
+- [x] [Zig](https://ziglang.org/) `zig`
+
+### Caches config of the following coding agents
+
+The configuration of the following coding agents is mapped to the corresponding directories in
+your home directory, so they will work seamlessly inside the sandbox without needing to
+re-authenticate or re-configure them.
+
+1. [Claude code](https://code.claude.com/docs/en/overview)
+1. [OpenAI Codex](https://openai.com/codex/)
+1. [Google Gemini CLI](https://github.com/google-gemini/gemini-cli)
+
+### Installation
+
+```
+$ go install github.com/ashishb/amazing-sandbox/src/asb/cmd/asb@latest
+...
+```
+
+Or download a binary from the [releases page](https://github.com/ashishb/amazing-sandbox/releases)
+
+## Usage
+
+### Run [yarn](https://yarnpkg.com/) with full access to current directory + a cache directory but no access to full disk
+
+```bash
+$ asb yarn install
+...
+```
+
+### Run [HTML linter](https://www.npmjs.com/package/htmlhint) inside the sandbox with `-n`, that is, no Internet access
+
+```bash
+$ asb -n npx htmlhint
+...  
+```
+
+### Run [yamllint](https://github.com/adrienverge/yamllint) inside the sandbox
+
+```bash
+$ asb uvx yamllint -d <path-to-dir-containing-yaml-files-to-lint>
+...  
+```
+
+### Run [Claude code](https://code.claude.com/docs/en/overview) against the current directory
+
+```bash
+$ asb npx @anthropic-ai/claude-code
+...  
+```
+
+### Run [Open AI Codex](https://openai.com/codex/) against the  directory "~/src/repo1"
+
+```bash
+$ asb -d ~/src/repo1 npx @openai/codex
+...
+```
+
+### Run [Google Gemini CLI](https://github.com/google-gemini/gemini-cli) inside the sandbox
+
+```bash
+$ asb npx @google/gemini-cli@latest
+...
+```
+
+### Run [fd tool](https://github.com/sharkdp/fd) inside the sandbox with no Internet access (air-gapped)
+
+```bash
+$ asb cargo install fd-find  # One time install
+...
+$ asb  -n cargo-exec fd '.*.go'
+...
+```
+
+### Run [hadolint](https://github.com/hadolint/hadolint) (Haskell-based Dockerfile linter) inside the sandbox
+
+```bash
+$ asb cabal update && asb cabal install hadolint  # One time install
+...
+$ asb -n cabal-exec hadolint Dockerfile
+...
+```
+
+### Run [acoustid-index](https://github.com/acoustid/acoustid-index) build using Zig inside the sandbox
+
+```bash
+$ git clone https://github.com/acoustid/acoustid-index.git
+...
+$ cd acoustid-index
+$ asb zig build
+...
+```
+
+### Run [Grok Build](https://x.ai/cli) inside the sandbox
+
+```bash
+$ asb bash
+<inside the sandboxed shell>
+# One-time setup
+$ apt-get update -y
+$ apt-get install -y curl
+$ curl -fsSL https://x.ai/cli/install.sh | bash
+# Do this to run it from now on
+$ /root/.grok/bin/grok # To start it
+```
+
+### Run [Obsidian](https://obsidian.md/) inside the sandbox on macOS
+
+```bash
+$ asb --mode=native \
+  --mount-ro /private/var/db/eligibilityd/eligibility.plist \
+  --mount-ro /private/var/db/mds/messages/$(id -u)/se_SecurityMessages \
+  --mount-rw "$HOME/Library/Application Support/obsidian/" \
+  --mount-rw "<path to Obsidian vault>" \
+  --mount-rw $HOME/.obsidian-cli.sock \
+  exec /Applications/Obsidian.app/Contents/MacOS/Obsidian --no-sandbox
+```
+
+### Run [VScode](https://code.visualstudio.com) and its [potentially malicious extensions](https://www.broadcom.com/support/security-center/protection-bulletin/malicious-vscode-extensions-infecing-users-with-cryptominer) inside the sandbox on Mac OS
+
+```bash
+$ asb --mode=native \
+   --mount-rw "$HOME/Library/Application Support/Code" \
+   exec /Applications/Visual\ Studio\ Code.app/Contents/MacOS/Electron --no-sandbox <code-dir>
+```
+
+## To see the full usage
+
+```bash
+asb is CLI tool for running tools inside Sandbox
+See https://ashishb.net/programming/amazing-sandbox/ for reasoning behind this tool
+
+$ asb --help
+Usage:
+  asb [flags]
+  asb [command]
+
+Available Commands:
+  bash        Run a bash command
+  bun         Run a bun command
+  cabal       Run a Haskell cabal command
+  cabal-exec  Run a Haskell-based binary already installed inside sandbox
+  cargo       Run a cargo command
+  cargo-exec  Run a Rust-based binary package already installed inside sandbox
+  completion  Generate the autocompletion script for the specified shell
+  exec        Run an arbitrary host binary inside the sandbox (requires --mode=native)
+  gem         Run a Ruby gem-based CLI tool
+  go-exec     Run a Go-based binary package using go run
+  help        Help about any command
+  node        Run a node command
+  npm         Run an npm command
+  npx         Run an npx command
+  pip         Install Python packages using pip
+  pip-exec    Run a Python-based package already installed inside sandbox
+  pnpm        Run a pnpm command
+  poetry      Run a poetry command
+  python      Run a python command
+  uv          Run a uv command
+  uvx         Run a Python-based package already installed inside sandbox using uvx
+  version     Display asb version
+  yarn        Run a yarn command
+  zig         Run a Zig command
+
+Flags:
+  -i, --custom-docker-image string   Use a custom Docker image for the sandbox
+  -d, --directory string             Working directory for this command (default "/Users/ashishb/src/amazing-sandbox/src/asb")
+  -h, --help                         help for asb
+  -e, --load-env                     Load .env file from working directory (default true)
+      --mode string                  Sandbox mode to use (auto, podman, docker, or native; auto prefers docker) (default "auto")
+  -m, --mount-ro stringArray         Mount a directory as read-only inside the sandbox (can be specified multiple times)
+      --mount-rw stringArray         Mount a directory as read-write inside the sandbox (can be specified multiple times)
+  -x, --no-disk-access               Disable disk access inside the sandbox
+  -n, --no-network                   Disable network access inside the sandbox
+  -r, --read-only                    Load working directory and referenced directories as read-only
+  -w, --read-write                   Load working directory and referenced directories as read-write (default true)
+
+```
+
+## How I use it
+
+For interactive shells, one can use bash aliases, for example, `alias htmlhint=asb -n npx htmlhint`.
+However, this does not work for non-interactive shells, for example, inside [Makefile](https://ashishb.net/programming/use-makefile-for-android/).
+So, I prefer creating `~/.local/bin` which contains `htmlhint` [file](https://github.com/ashishb/dotfiles/blob/master/_local_bin/htmlhint)
+containing `asb npx htmlhint "$@"` and add `.local/bin` to the `$PATH` in `~/.bash_profile` via `export PATH=$PATH:$HOME/.local/bin`.
+
+## FAQ
+
+1. Why not use [bubblewrap](https://github.com/containers/bubblewrap)?  
+   It only [supports](https://github.com/containers/bubblewrap/issues/396) GNU/Linux.  
+   Further, the developer experience for trying to run a simple tool like `htmlhint` or `yamllint` is subpar.
+1. Why not use [Firejail](https://github.com/netblue30/firejail)?  
+   No support for Mac OS or Windows.  
+   Further, the developer experience for trying to run a simple tool like `htmlhint` or `yamllint` is subpar.
+1. Why not use `sandbox-exec` on Mac OS?  
+   `sandbox-exec` is [deprecated](https://github.com/openai/codex/issues/215).
+   But if you want, you can use `asb` to use `sandbox-exec`/`bubblewrap` via `asb --mode=native)
+1. Why not use [ai-jail](https://github.com/akitaonrails/ai-jail)?
+   `ai-jail` uses OS-level sandboxing via `bwrap` on Linux and the deprecated `sandbox-exec` on macOS.  
+   It has no Windows support.  
+   In contrast, `asb` uses Docker, which works consistently across Linux, macOS, and Windows.
+1. Why not use [drop](https://github.com/wrr/drop)?  
+   `drop` uses Linux mount namespaces for sandboxing and only supports Linux.  
+   In contrast, `asb` uses Docker/Seatbelt/Linux namespaces and supports all platforms - Linux, macOS, and Windows.
+1. I heard that Docker is not a [security boundary](https://kayssel.substack.com/p/docker-escape-breaking-out-of-containers)?  
+   Containers aren't as strong a security boundary as VMs; however, this means that a successful attack now requires infection of the container AND a concurrent container-escape vulnerability.
+   That's a really high bar; someone would need to burn a 0-day on that. Taken from [here](https://news.ycombinator.com/item?id=47612726)
+1. Why not use [devcontainers](https://github.com/devcontainers/spec)?
+   DevContainers are designed for full-fledged IDE-intensive development and cannot be used without `.devcontainer/devcontainer.json`.
+   If you are planning to sandbox the execution of arbitrary commands on your machine, then `asb` is better.
+1. I want to use a custom rootless image or a different version of Python instead of the [default images](https://github.com/ashishb/amazing-sandbox/blob/c23f6e3a4830d3ce188518d75679c68c019010d4/src/asb/internal/cmdrunner/cmd_config.go#L12-L31)?  
+   You can provide any custom image via `-i` CLI parameter.
+
+   ```bash
+   $ asb -i astral/uv:python3.12-bookworm-slim python --version
+   Python 3.12.12
+   $ asb -i astral/uv:python3.14-bookworm-slim python --version
+   Python 3.14.2
+   ```
