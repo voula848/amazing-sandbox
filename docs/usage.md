@@ -21,3 +21,4 @@ Notes and usage details for amazing-sandbox.
 - clarify the setup steps
 - add a note about the defaults
 - link the usage section
+- link the usage section
